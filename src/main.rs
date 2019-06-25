@@ -1,29 +1,27 @@
 extern crate amnesia;
+extern crate rand;
+extern crate ndarray;
 
-use amnesia::itembased::ItembasedCF;
+use rand::distributions::Uniform;
+use ndarray::{Array,Dim};
+use ndarray_rand::RandomExt;
+
+use amnesia::lsh::LshTable;
 
 fn main() {
 
-    let interactions: Vec<Vec<u32>> = vec![
-        vec![0, 1, 2],
-        vec![0, 2],
-        vec![1, 2]
-    ];
+    let num_samples = 1000;
+    let num_features = 100;
+    let num_components = 32;
 
-    let mut itembased_cf = ItembasedCF::new(3);
+    let samples: Vec<(u32, Array<f64, Dim<[usize; 1]>>)> = (0..num_samples)
+        .map(|sample_index| {
+            let data = Array::random(num_features, Uniform::new(-1.0, 1.0));
+            (sample_index, data)
+        })
+        .collect();
 
-    itembased_cf.fit_partial(&interactions);
-    itembased_cf.forget(&vec![0, 2]);
+    let mut table = LshTable::new(num_features, num_components);
 
-
-    let interactions2: Vec<Vec<u32>> = vec![
-        vec![0, 1, 2],
-        vec![1, 2]
-    ];
-
-    let mut itembased_cf2 = ItembasedCF::new(3);
-    itembased_cf2.fit_partial(&interactions2);
-
-    println!("{:?}", itembased_cf);
-    println!("{:?}", itembased_cf2);
+    table.partial_fit(&samples);
 }
