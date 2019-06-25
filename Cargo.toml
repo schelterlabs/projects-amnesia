@@ -1,0 +1,15 @@
+[package]
+name = "amnesia"
+version = "0.1.0"
+authors = ["sscdotopen <ssc.open@googlemail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+fnv = "1.0"
