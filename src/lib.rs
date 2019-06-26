@@ -1,7 +1,4 @@
-#[cfg(test)]
-#[macro_use]
-extern crate ndarray;
-#[cfg(not(test))]
+#[cfg_attr(test, macro_use)]
 extern crate ndarray;
 
 pub mod itembased;
