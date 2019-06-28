@@ -8,6 +8,8 @@ use fnv::{FnvHashMap, FnvHashSet};
 use std::hash::Hash;
 use std::hash::Hasher;
 
+use crate::IncrementalDecremental;
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Example {
     features: Array<f64, Dim<[usize; 1]>>,
@@ -73,10 +75,13 @@ impl LshTable {
             None => FnvHashSet::with_capacity_and_hasher(0, Default::default())
         }
     }
+}
 
-    pub fn partial_fit(&mut self, samples: &[Example]) {
+impl IncrementalDecremental<Example> for LshTable {
+
+    fn partial_fit(&mut self, data: &[Example]) {
         // TODO stacking and single MM would improve performance
-        for sample in samples.iter() {
+        for sample in data.iter() {
 
             let key = self.key(sample);
             self.table.entry(key)
@@ -85,7 +90,7 @@ impl LshTable {
         }
     }
 
-    pub fn forget(&mut self, sample: &Example) {
+    fn forget(&mut self, sample: &Example) {
         let key = self.key(sample);
         self.table.get_mut(&key).unwrap().remove(sample);
     }
@@ -96,6 +101,7 @@ mod tests {
 
     extern crate fnv;
 
+    use crate::IncrementalDecremental;
     use crate::lsh::LshTable;
     use crate::lsh::Example;
 
@@ -143,7 +149,7 @@ mod tests {
         assert!(similar_indexes.contains(&Example::new(array![1.0, 2.0, 3.0, 3.99, 5.0])));
         assert!(!similar_indexes.contains(&Example::new(array![-1.0, -1.0, -1.0, -1.0, -1.0])));
 
-        table.forget(&&Example::new(array![1.0, 2.0, 3.0, 3.99, 5.0]));
+        table.forget(&Example::new(array![1.0, 2.0, 3.0, 3.99, 5.0]));
 
         let similar_indexes = table.similar_sample_indexes(&Example::new(array![1.0, 2.0, 3.0, 4.0, 5.0]));
 

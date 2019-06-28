@@ -1,6 +1,7 @@
 extern crate fnv;
 
 use fnv::{FnvHashMap, FnvHashSet};
+use crate::IncrementalDecremental;
 
 #[derive(Debug)]
 pub struct ItembasedCF {
@@ -18,8 +19,11 @@ impl ItembasedCF {
 
         ItembasedCF { c, s, n }
     }
+}
 
-    pub fn fit_partial(&mut self, interactions: &[Vec<u32>]) {
+impl IncrementalDecremental<Vec<u32>> for ItembasedCF {
+
+    fn partial_fit(&mut self, interactions: &[Vec<u32>]) {
 
         let mut items_to_rescore = FnvHashSet::with_capacity_and_hasher(0, Default::default());
 
@@ -51,7 +55,7 @@ impl ItembasedCF {
         }
     }
 
-    pub fn forget(&mut self, user_history: &[u32]) {
+    fn forget(&mut self, user_history: &Vec<u32>) {
 
         // Update cooccurrence matrix
         for item_a in user_history.iter() {
@@ -76,11 +80,13 @@ impl ItembasedCF {
             }
         }
     }
+
 }
 
 #[cfg(test)]
 mod tests {
 
+    use crate::IncrementalDecremental;
     use crate::itembased::ItembasedCF;
 
     #[test]
@@ -93,7 +99,7 @@ mod tests {
 
         let mut itembased_cf = ItembasedCF::new(3);
 
-        itembased_cf.fit_partial(&interactions);
+        itembased_cf.partial_fit(&interactions);
         itembased_cf.forget(&vec![0, 2]);
 
 
@@ -103,7 +109,7 @@ mod tests {
         ];
 
         let mut itembased_cf2 = ItembasedCF::new(3);
-        itembased_cf2.fit_partial(&interactions2);
+        itembased_cf2.partial_fit(&interactions2);
 
         assert_eq!(itembased_cf.c, itembased_cf2.c);
         assert_eq!(itembased_cf.s, itembased_cf2.s);
