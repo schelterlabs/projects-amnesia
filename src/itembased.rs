@@ -1,10 +1,14 @@
 extern crate fnv;
 
+use std::cmp::Ordering;
 use fnv::{FnvHashMap, FnvHashSet};
-use crate::IncrementalDecremental;
+use std::collections::BinaryHeap;
+
+use crate::IncrementalDecrementalModel;
 
 #[derive(Debug)]
 pub struct ItembasedCF {
+    k: usize,
     c: Vec<FnvHashMap<u32, u32>>,
     s: Vec<FnvHashMap<u32, f32>>,
     n: Vec<u32>,
@@ -12,16 +16,16 @@ pub struct ItembasedCF {
 
 impl ItembasedCF {
 
-    pub fn new(num_items: usize) -> ItembasedCF {
+    pub fn new(num_items: usize, k: usize) -> ItembasedCF {
         let c = vec![FnvHashMap::with_capacity_and_hasher(0, Default::default()); num_items];
         let s = vec![FnvHashMap::with_capacity_and_hasher(0, Default::default()); num_items];
         let n = vec![0; num_items];
 
-        ItembasedCF { c, s, n }
+        ItembasedCF { k, c, s, n }
     }
 }
 
-impl IncrementalDecremental<Vec<u32>> for ItembasedCF {
+impl IncrementalDecrementalModel<Vec<u32>, u32, FnvHashSet<u32>> for ItembasedCF {
 
     fn partial_fit(&mut self, interactions: &[Vec<u32>]) {
 
@@ -81,12 +85,71 @@ impl IncrementalDecremental<Vec<u32>> for ItembasedCF {
         }
     }
 
+    fn predict(&self, item: &u32) -> FnvHashSet<u32> {
+        // We'll use a heap to keep track of the current top-n scored items
+        let mut top_items = BinaryHeap::with_capacity(self.k);
+
+        for (other_item, similarity) in self.s[*item as usize].iter() {
+            let scored_item = ScoredItem { item: *other_item, score: *similarity };
+
+            if top_items.len() < self.k {
+                top_items.push(scored_item);
+            } else {
+                let mut top = top_items.peek_mut().unwrap();
+                if scored_item < *top {
+                    *top = scored_item;
+                }
+            }
+        }
+
+        let top_k_items: FnvHashSet<u32> = top_items
+            .drain()
+            .map(|scored_item| scored_item.item)
+            .collect();
+
+        top_k_items
+    }
 }
+
+
+
+/// Result type used to find the top-k anomalous items per item via a binary heap
+#[derive(PartialEq, Debug)]
+struct ScoredItem {
+    pub item: u32,
+    pub score: f32,
+}
+
+/// Ordering for our max-heap, not that we must use a special implementation here as there is no
+/// total order on floating point numbers.
+fn cmp_reverse(scored_item_a: &ScoredItem, scored_item_b: &ScoredItem) -> Ordering {
+    match scored_item_a.score.partial_cmp(&scored_item_b.score) {
+        Some(Ordering::Less) => Ordering::Greater,
+        Some(Ordering::Greater) => Ordering::Less,
+        Some(Ordering::Equal) => Ordering::Equal,
+        None => Ordering::Equal
+    }
+}
+
+impl Eq for ScoredItem {}
+
+impl Ord for ScoredItem {
+    fn cmp(&self, other: &Self) -> Ordering {
+        cmp_reverse(self, other)
+    }
+}
+
+impl PartialOrd for ScoredItem {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(cmp_reverse(self, other))
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
 
-    use crate::IncrementalDecremental;
+    use crate::IncrementalDecrementalModel;
     use crate::itembased::ItembasedCF;
 
     #[test]
@@ -97,7 +160,7 @@ mod tests {
             vec![1, 2]
         ];
 
-        let mut itembased_cf = ItembasedCF::new(3);
+        let mut itembased_cf = ItembasedCF::new(3, 2);
 
         itembased_cf.partial_fit(&interactions);
         itembased_cf.forget(&vec![0, 2]);
@@ -108,7 +171,7 @@ mod tests {
             vec![1, 2]
         ];
 
-        let mut itembased_cf2 = ItembasedCF::new(3);
+        let mut itembased_cf2 = ItembasedCF::new(3, 2);
         itembased_cf2.partial_fit(&interactions2);
 
         assert_eq!(itembased_cf.c, itembased_cf2.c);

@@ -4,7 +4,9 @@ extern crate ndarray;
 pub mod itembased;
 pub mod lsh;
 
-trait IncrementalDecremental<T> {
-    fn partial_fit(self: &mut Self, data: &[T]);
-    fn forget(self: &mut Self, data: &T);
+trait IncrementalDecrementalModel<T, I, O> {
+    fn partial_fit(self: &mut Self, items: &[T]);
+    fn forget(self: &mut Self, item: &T);
+
+    fn predict(self: &Self, item: &I) -> O;
 }

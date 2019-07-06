@@ -16,3 +16,4 @@ fnv = "1.0"
 rand="0.6"
 ndarray = "0.12"
 ndarray-rand = "0.9"
+ndarray-linalg = { version = "0.11", features = ["openblas"] }
