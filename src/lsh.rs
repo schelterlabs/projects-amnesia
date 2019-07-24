@@ -23,7 +23,7 @@ pub struct Example {
 }
 
 impl Example {
-    fn new(features: FeatureVector, label: u8) -> Example {
+    pub fn new(features: FeatureVector, label: u8) -> Example {
         Example { features, label }
     }
 }
