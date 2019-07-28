@@ -3,6 +3,7 @@ extern crate ndarray;
 
 pub mod itembased;
 pub mod lsh;
+pub mod ridge;
 
 pub trait IncrementalDecrementalModel<T, I, O> {
     fn partial_fit(self: &mut Self, data: &[T]);

@@ -24,11 +24,8 @@ fn main() {
 
 }
 
-fn run_experiment(
-    dataset_file: &str,
-    num_features: usize,
-    num_examples_to_forget: usize
-) {
+
+fn read_libsvm_file(dataset_file: &str, num_features: usize,) -> Vec<Example> {
 
     let mut examples = Vec::new();
 
@@ -54,11 +51,21 @@ fn run_experiment(
                     features[offset] = value;
                 }
             }
-
         }
 
         examples.push(Example::new(features, label));
     }
+
+    examples
+}
+
+fn run_experiment(
+    dataset_file: &str,
+    num_features: usize,
+    num_examples_to_forget: usize
+) {
+
+    let examples = read_libsvm_file(dataset_file, num_features);
 
     let mut knn = ApproximateKnn::new(20, num_features, 32, 10, 2);
 

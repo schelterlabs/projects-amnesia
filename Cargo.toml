@@ -27,3 +27,4 @@ ndarray = "0.12"
 ndarray-rand = "0.9"
 ndarray-linalg = { version = "0.11", features = ["openblas"] }
 csv = "1.1"
+GSL = "*"
