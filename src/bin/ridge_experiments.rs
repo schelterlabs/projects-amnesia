@@ -110,9 +110,6 @@ fn main() {
     run_experiment("datasets/housing_scale.libsvm", 506, 13, num_examples_to_forget);
     run_experiment("datasets/cadata.libsvm",  20_640, 8, num_examples_to_forget);
     run_experiment("datasets/YearPredictionMSD.libsvm",  463_715, 90, num_examples_to_forget);
-    //run_experiment("datasets/YearPredictionMSD_testing.libsvm", 51_630, 90, num_examples_to_forget);
-
-
 }
 
 fn run_experiment(
