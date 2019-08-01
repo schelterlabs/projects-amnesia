@@ -16,6 +16,10 @@ path = "src/bin/itembased_experiments.rs"
 name = "lsh_experiments"
 path = "src/bin/lsh_experiments.rs"
 
+[[bin]]
+name = "ridge_experiments"
+path = "src/bin/ridge_experiments.rs"
+
 
 [lib]
 path = "src/lib.rs"

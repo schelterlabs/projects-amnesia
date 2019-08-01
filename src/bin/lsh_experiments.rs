@@ -19,8 +19,8 @@ fn main() {
     let num_examples_to_forget = 20;
 
     run_experiment("datasets/mushrooms.libsvm", 112, num_examples_to_forget);
-    //run_experiment("datasets/phishing.libsvm", 68, num_examples_to_forget);
-    //run_experiment("datasets/covtype.libsvm", 54, num_examples_to_forget);
+    run_experiment("datasets/phishing.libsvm", 68, num_examples_to_forget);
+    run_experiment("datasets/covtype.libsvm", 54, num_examples_to_forget);
 
 }
 
@@ -76,8 +76,9 @@ fn run_experiment(
 
     let mut examples_without = examples.clone();
 
+    let mut rng = rand::thread_rng();
     for _ in 0 .. num_examples_to_forget {
-        let mut rng = rand::thread_rng();
+
         let example = rng.gen_range(0, examples_without.len());
 
         let to_forget = examples_without.remove(example);

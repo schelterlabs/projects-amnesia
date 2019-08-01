@@ -5,8 +5,8 @@ use crate::IncrementalDecrementalModel;
 use rgsl::MatrixF64;
 use rgsl::VectorF64;
 
-use rgsl::linear_algebra::{QR_decomp, QR_solve, QR_update, QR_unpack};
-use rgsl::blas::level1::daxpy;
+use rgsl::linear_algebra::{QR_decomp, QR_QRsolve, QR_update, QR_unpack};
+use rgsl::blas::level1::{daxpy, ddot};
 use rgsl::blas::level3::dgemm;
 use rgsl::blas::level2::dgemv;
 use rgsl::cblas::Transpose::{Trans,NoTrans};
@@ -14,8 +14,8 @@ use rgsl::cblas::Transpose::{Trans,NoTrans};
 
 #[derive(Debug)]
 pub struct Example {
-    features: VectorF64,
-    target: f64,
+    pub features: VectorF64,
+    pub target: f64,
 }
 
 impl Example {
@@ -35,7 +35,8 @@ impl Clone for Example {
 pub struct RidgeRegression {
     q: MatrixF64,
     r: MatrixF64,
-    z: VectorF64
+    z: VectorF64,
+    weights: VectorF64,
 }
 
 impl RidgeRegression {
@@ -62,7 +63,10 @@ impl RidgeRegression {
 
         QR_unpack(&qr, &tau, &mut q, &mut r);
 
-        RidgeRegression { q, r, z }
+        let mut weights = VectorF64::new(num_features).expect("Unable to allocate tau");
+        QR_QRsolve(&mut q, &mut r, &z, &mut weights);
+
+        RidgeRegression { q, r, z, weights }
     }
 }
 
@@ -77,6 +81,8 @@ impl IncrementalDecrementalModel<Example, VectorF64, f64> for RidgeRegression {
             QR_update(&mut self.q, &mut self.r, w, &example.features);
             daxpy(example.target, &example.features, &mut self.z);
         }
+
+        QR_QRsolve(&mut self.q, &mut self.r, &self.z, &mut self.weights);
     }
 
     fn forget(&mut self, example: &Example) {
@@ -85,10 +91,13 @@ impl IncrementalDecrementalModel<Example, VectorF64, f64> for RidgeRegression {
         dgemv(Trans, -1.0, &self.q, &example.features, 1.0, &mut w);
         QR_update(&mut self.q, &mut self.r, w, &example.features);
         daxpy(-1.0 * example.target, &example.features, &mut self.z);
+        QR_QRsolve(&mut self.q, &mut self.r, &self.z, &mut self.weights);
     }
 
-    fn predict(&self, data: &VectorF64) -> f64 {
-        unimplemented!()
+    fn predict(&self, features: &VectorF64) -> f64 {
+        let mut y_hat = 0_f64;
+        ddot(&features, &self.weights, &mut y_hat);
+        y_hat
     }
 }
 
