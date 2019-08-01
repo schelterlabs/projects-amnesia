@@ -41,8 +41,7 @@ pub struct RidgeRegression {
 
 impl RidgeRegression {
 
-    //TODO add lambda I
-    pub fn new(x: MatrixF64, y: VectorF64) -> Self {
+    pub fn new(x: MatrixF64, y: VectorF64, lambda: f64) -> Self {
 
         let num_features = x.size2();
 
@@ -51,6 +50,11 @@ impl RidgeRegression {
 
         dgemm(Trans, NoTrans, 1.0, &x, &x, 0.0, &mut xtx);
         dgemv(Trans, 1.0, &x, &y, 1.0, &mut z);
+
+        for n in 0..num_features {
+            let v = xtx.get(n, n);
+            xtx.set(n, n, v + lambda);
+        }
 
         let mut tau = VectorF64::new(num_features).expect("Unable to allocate tau");
 
@@ -128,7 +132,7 @@ mod tests {
         );
 
 
-        let mut ridge = RidgeRegression::new(x.matrix(), y.vector());
+        let mut ridge = RidgeRegression::new(x.matrix(), y.vector(), 0.001);
 
         let example_to_forget = Example::new(
             VectorView::from_array(&mut [1.257476,  1.090417]).vector(),
@@ -150,7 +154,7 @@ mod tests {
             &mut [0.475747, -0.084074, 0.228626, -0.867025]
         );
 
-        let mut ridge2 = RidgeRegression::new(x2.matrix(), y2.vector());
+        let mut ridge2 = RidgeRegression::new(x2.matrix(), y2.vector(), 0.001);
 
         println!("RIDGE RETRAIN\n{:?}", ridge2);
 

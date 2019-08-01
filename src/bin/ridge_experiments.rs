@@ -124,7 +124,7 @@ fn run_experiment(
     let (x, y) = read_libsvm_file_matrix_vector(dataset_file, num_examples, num_features);
 
     let start = Instant::now();
-    let mut ridge = RidgeRegression::new(x, y);
+    let mut ridge = RidgeRegression::new(x, y, 0.001);
     let training_duration = start.elapsed();
 
 
@@ -141,7 +141,7 @@ fn run_experiment(
         let (x_for_retrain, y_for_retrain) = examples_to_matrix(&examples, num_features);
 
         let start = Instant::now();
-        let _retrained_ridge = RidgeRegression::new(x_for_retrain, y_for_retrain);
+        let _retrained_ridge = RidgeRegression::new(x_for_retrain, y_for_retrain, 0.001);
         let retrain_duration = start.elapsed();
 
         println!("{},{},{}", dataset_file, forgetting_duration.as_micros(),
