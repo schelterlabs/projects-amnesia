@@ -1,5 +1,8 @@
 #[cfg_attr(test, macro_use)]
 extern crate ndarray;
+#[macro_use]
+extern crate abomonation_derive;
+extern crate abomonation;
 
 pub mod itembased;
 pub mod lsh;

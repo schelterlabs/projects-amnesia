@@ -118,7 +118,6 @@ fn run_experiment(
     num_features: usize,
     num_examples_to_forget: usize)
 {
-
     let mut examples = read_libsvm_file(dataset_file, num_features);
 
     let (x, y) = read_libsvm_file_matrix_vector(dataset_file, num_examples, num_features);

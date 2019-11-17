@@ -54,7 +54,7 @@ impl ApproximateKnn {
         num_components: usize,
         k: usize,
         num_classes: usize)
-        -> ApproximateKnn {
+    -> ApproximateKnn {
 
         let tables: Vec<LshTable> = (0..num_tables)
             .map(|_| LshTable::new(num_features, num_components, k, num_classes))
