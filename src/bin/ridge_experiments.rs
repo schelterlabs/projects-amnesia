@@ -123,10 +123,7 @@ fn run_experiment(
 
     let (x, y) = read_libsvm_file_matrix_vector(dataset_file, num_examples, num_features);
 
-    let start = Instant::now();
     let mut ridge = RidgeRegression::new(x, y, 0.001);
-    let training_duration = start.elapsed();
-
 
     let mut rng = rand::thread_rng();
     for _ in 0 .. num_examples_to_forget {

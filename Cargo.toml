@@ -1,7 +1,7 @@
 [package]
 name = "amnesia"
 version = "0.1.0"
-authors = ["sscdotopen <ssc.open@googlemail.com>"]
+authors = ["Sebastian <ssc@apache.org>"]
 edition = "2018"
 
 [[bin]]
@@ -20,6 +20,10 @@ path = "src/bin/lsh_experiments.rs"
 name = "ridge_experiments"
 path = "src/bin/ridge_experiments.rs"
 
+[[bin]]
+name = "differential_itembased_experiments"
+path = "src/bin/differential_itembased_experiments.rs"
+
 
 [lib]
 path = "src/lib.rs"
@@ -32,3 +36,5 @@ ndarray-rand = "0.9"
 ndarray-linalg = { version = "0.11", features = ["openblas"] }
 csv = "1.1"
 GSL = "*"
+timely = "0.10.0"
+differential-dataflow = "0.10.0"
