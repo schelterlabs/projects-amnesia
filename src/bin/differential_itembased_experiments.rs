@@ -10,7 +10,7 @@ fn main() {
 
         let mut interactions_input = InputSession::new();
 
-        let probe = amnesia::differential::itembased_cf(worker, &mut interactions_input);
+        let probe = amnesia::differential::itembased::itembased_cf(worker, &mut interactions_input);
 
         let interactions: Vec<(u32, u32)> = vec![
             (0, 0), (0, 1), (0, 2),
