@@ -152,7 +152,7 @@ pub fn lsh<T>(
                         key |= 1u32 << dimension as u32;
                     }
                 }
-                
+
                 ((matrix.table_index, key), example.id)
             })
             .inspect(|x| println!("{:?}", x))

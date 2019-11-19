@@ -7,6 +7,7 @@ extern crate abomonation;
 pub mod itembased;
 pub mod lsh;
 pub mod ridge;
+pub mod utils;
 
 pub mod differential;
 
