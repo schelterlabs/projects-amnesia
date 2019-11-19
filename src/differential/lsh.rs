@@ -1,5 +1,6 @@
 extern crate timely;
 extern crate differential_dataflow;
+extern crate blas;
 
 use timely::worker::Worker;
 use timely::communication::Allocator;
@@ -15,15 +16,17 @@ use differential_dataflow::Hashable;
 use std::hash::Hasher;
 use std::cmp::Ordering;
 
+use blas::*;
+
 #[derive(Abomonation, Debug, Clone)]
 pub struct Sample {
     pub id: u64,
-    pub features: [f64; 10],
+    pub features: Vec<f64>,
     pub label: u8,
 }
 
 impl Sample {
-    pub fn new(id: u64, features: [f64; 10], label: u8) -> Sample {
+    pub fn new(id: u64, features: Vec<f64>, label: u8) -> Sample {
         Sample { id, features, label }
     }
 }
@@ -61,12 +64,15 @@ impl Hashable for Sample {
 #[derive(Abomonation, Debug, Clone)]
 pub struct ProjectionMatrix {
     pub table_index: usize,
-    pub seed: u64,
+    pub weights: Vec<f64>,
 }
 
 impl ProjectionMatrix {
-    pub fn new(table_index: usize, seed: u64) -> ProjectionMatrix {
-        ProjectionMatrix { table_index, seed }
+    pub fn new(
+        table_index: usize,
+        weights: Vec<f64>)
+    -> ProjectionMatrix {
+        ProjectionMatrix { table_index, weights }
     }
 }
 
@@ -118,7 +124,37 @@ pub fn lsh<T>(
 
         examples
             .map(|example| ((), example))
-            .join(&projection_matrices)
+            .join_map(&projection_matrices, |_, example, matrix| {
+
+                let num_features = example.features.len();
+                let num_hash_dimensions = matrix.weights.len() / num_features;
+
+                let mut projection: Vec<f64> = vec![0.0; num_hash_dimensions as usize];
+
+                unsafe {
+                    dgemv(
+                        b'T',
+                        num_features as i32,
+                        num_hash_dimensions as i32,
+                        1.0,
+                        &matrix.weights,
+                        num_features as i32,
+                        &example.features,
+                        1,
+                        0.0,
+                        &mut projection,
+                        1);
+                }
+
+                let mut key = 0u32;
+                for (dimension, value) in projection.iter().enumerate() {
+                    if *value > 0.0 {
+                        key |= 1u32 << dimension as u32;
+                    }
+                }
+                
+                ((matrix.table_index, key), example.id)
+            })
             .inspect(|x| println!("{:?}", x))
             .probe()
     });
