@@ -7,6 +7,8 @@ extern crate abomonation;
 pub mod itembased;
 pub mod lsh;
 pub mod ridge;
+pub mod multinomial_nb;
+
 pub mod utils;
 
 pub mod differential;
