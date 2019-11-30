@@ -155,6 +155,7 @@ pub fn lsh<T>(
 
                 ((matrix.table_index, key), example.id)
             })
+
             .inspect(|x| println!("{:?}", x))
             .probe()
     });

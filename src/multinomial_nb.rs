@@ -29,6 +29,7 @@ impl MultinomialNaiveBayes {
     }
 }
 
+#[derive(Clone)]
 pub struct MNBFeatures {
     pub features: FnvHashMap<u32, u32>,
 }

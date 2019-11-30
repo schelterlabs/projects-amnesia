@@ -21,6 +21,10 @@ name = "ridge_experiments"
 path = "src/bin/ridge_experiments.rs"
 
 [[bin]]
+name = "mnb_experiments"
+path = "src/bin/mnb_experiments.rs"
+
+[[bin]]
 name = "differential_itembased_experiments"
 path = "src/bin/differential_itembased_experiments.rs"
 
