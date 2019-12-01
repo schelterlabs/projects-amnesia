@@ -12,11 +12,13 @@ use differential_dataflow::input::InputSession;
 use differential_dataflow::lattice::Lattice;
 use differential_dataflow::operators::Join;
 use differential_dataflow::Hashable;
+use timely::dataflow::operators::Probe;
 
 use std::hash::Hasher;
 use std::cmp::Ordering;
 
 use blas::*;
+use self::differential_dataflow::operators::arrange::ArrangeByKey;
 
 #[derive(Abomonation, Debug, Clone)]
 pub struct Sample {
@@ -114,7 +116,9 @@ pub fn lsh<T>(
 -> ProbeHandle<T>
     where T: Timestamp + TotalOrder + Lattice + Refines<()> {
 
-    let probe = worker.dataflow(|scope| {
+    let mut probe = timely::dataflow::operators::probe::Handle::new();
+
+    worker.dataflow(|scope| {
 
         let initial_projection_matrices = tables_input.to_collection(scope);
         let examples = examples_input.to_collection(scope);
@@ -122,7 +126,7 @@ pub fn lsh<T>(
         let projection_matrices = initial_projection_matrices
             .map(|matrix| ((), matrix));
 
-        examples
+        let indexed_examples = examples
             .map(|example| ((), example))
             .join_map(&projection_matrices, |_, example, matrix| {
 
@@ -154,10 +158,12 @@ pub fn lsh<T>(
                 }
 
                 ((matrix.table_index, key), example.id)
-            })
+            });
 
-            .inspect(|x| println!("{:?}", x))
-            .probe()
+        let arranged_indexed_examples = indexed_examples.arrange_by_key();
+            //.inspect(|x| println!("{:?}", x))
+
+        arranged_indexed_examples.stream.probe_with(&mut probe);
     });
 
     probe

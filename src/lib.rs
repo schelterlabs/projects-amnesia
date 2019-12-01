@@ -9,7 +9,7 @@ pub mod lsh;
 pub mod ridge;
 pub mod multinomial_nb;
 
-pub mod utils;
+pub mod io_utils;
 
 pub mod differential;
 

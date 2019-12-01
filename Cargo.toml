@@ -28,6 +28,14 @@ path = "src/bin/mnb_experiments.rs"
 name = "differential_itembased_experiments"
 path = "src/bin/differential_itembased_experiments.rs"
 
+[[bin]]
+name = "differential_lsh_experiments"
+path = "src/bin/differential_lsh_experiments.rs"
+
+[[bin]]
+name = "differential_mnb_experiments"
+path = "src/bin/differential_mnb_experiments.rs"
+
 
 [lib]
 path = "src/lib.rs"

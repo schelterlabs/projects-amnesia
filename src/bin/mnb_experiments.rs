@@ -20,7 +20,7 @@ fn run_experiment(
     num_labels: u8,
     adjust_labels: bool)
 {
-    let examples = amnesia::utils::read_libsvm_file_for_mnb(&dataset_file, adjust_labels);
+    let examples = amnesia::io_utils::read_libsvm_file_for_mnb(&dataset_file, adjust_labels);
 
     let mut mnb = MultinomialNaiveBayes::new(num_labels, num_features);
 

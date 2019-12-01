@@ -27,7 +27,7 @@ fn run_experiment(
     num_examples_to_forget: usize
 ) {
 
-    let examples = amnesia::utils::read_libsvm_file(dataset_file, num_features);
+    let examples = amnesia::io_utils::read_libsvm_file(dataset_file, num_features);
 
     let mut knn = ApproximateKnn::new(20, num_features, 32, 10, 2);
 

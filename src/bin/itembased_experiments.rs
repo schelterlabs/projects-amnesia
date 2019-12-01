@@ -15,7 +15,6 @@ fn main() {
     run_experiment("datasets/movielens1m.tsv", 6040, 3706, num_users_to_forget);
     run_experiment("datasets/jester.tsv", 50692, 140, num_users_to_forget);
     run_experiment("datasets/ciaodvd.tsv", 21019, 71633, num_users_to_forget);
-
 }
 
 fn run_experiment(
@@ -76,6 +75,5 @@ fn run_experiment(
         println!("{},{},{},{},{}", dataset_file, user, user_interactions.len(),
             forgetting_duration.as_millis(), retraining_duration.as_millis());
     }
-
 
 }

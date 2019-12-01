@@ -10,13 +10,21 @@ use rand::distributions::Normal;
 use differential_dataflow::input::InputSession;
 use amnesia::differential::lsh::ProjectionMatrix;
 use rand::{thread_rng, Rng};
+use rand::seq::SliceRandom;
+
+use std::time::Instant;
 
 fn main() {
+    run_experiment("datasets/mushrooms.libsvm", 112);
+    run_experiment("datasets/phishing.libsvm", 68);
+    run_experiment("datasets/covtype.libsvm", 54);
+}
+
+fn run_experiment(dataset_file: &'static str, num_features: usize) {
 
     timely::execute_from_args(std::env::args(), move |worker| {
 
-        let dataset_file = "datasets/mushrooms.libsvm";
-        let num_features = 112;
+        let num_samples_to_forget = 20;
         let num_tables = 20;
 
         let num_hash_dimensions = 32;
@@ -42,7 +50,8 @@ fn main() {
             tables.push(projection_matrix);
         }
 
-        let samples = amnesia::utils::read_libsvm_file_for_differential(dataset_file, num_features);
+        let mut samples = amnesia::differential::io_utils::read_libsvm_file_for_differential(
+            dataset_file, num_features);
 
         for projection_matrix in tables.iter() {
             if projection_matrix.table_index as usize % worker.peers() == worker.index() {
@@ -64,6 +73,30 @@ fn main() {
         worker.step_while(|| {
             probe.less_than(examples_input.time()) && probe.less_than(tables_input.time())
         });
+
+        let mut rng = rand::thread_rng();
+        let (samples_to_forget, _) = samples.partial_shuffle(&mut rng, num_samples_to_forget);
+
+        let start = Instant::now();
+
+        for sample in samples_to_forget.iter() {
+            if sample.id as usize % worker.peers() == worker.index() {
+                examples_input.remove(sample.clone());
+            }
+        }
+
+        examples_input.advance_to(2);
+        examples_input.flush();
+        tables_input.advance_to(2);
+        tables_input.flush();
+
+        worker.step_while(|| {
+            probe.less_than(examples_input.time()) && probe.less_than(tables_input.time())
+        });
+
+        let forgetting_duration = start.elapsed();
+
+        println!("{},{},{}", dataset_file, worker.index(), forgetting_duration.as_micros());
 
     }).unwrap();
 }
