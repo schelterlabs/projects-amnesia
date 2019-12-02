@@ -15,16 +15,20 @@ use rand::seq::SliceRandom;
 use std::time::Instant;
 
 fn main() {
-    run_experiment("datasets/mushrooms.libsvm", 112);
-    run_experiment("datasets/phishing.libsvm", 68);
-    run_experiment("datasets/covtype.libsvm", 54);
+
+    let num_samples_to_forget: usize = std::env::args().nth(2)
+        .expect("num_samples_to_forget not specified").parse()
+        .expect("Unable to parse num_samples_to_forget");
+
+    run_experiment("datasets/mushrooms.libsvm", 112, num_samples_to_forget);
+    run_experiment("datasets/phishing.libsvm", 68, num_samples_to_forget);
+    run_experiment("datasets/covtype.libsvm", 54, num_samples_to_forget);
 }
 
-fn run_experiment(dataset_file: &'static str, num_features: usize) {
+fn run_experiment(dataset_file: &'static str, num_features: usize, num_samples_to_forget: usize) {
 
     timely::execute_from_args(std::env::args(), move |worker| {
 
-        let num_samples_to_forget = 20;
         let num_tables = 20;
 
         let num_hash_dimensions = 32;
@@ -96,7 +100,9 @@ fn run_experiment(dataset_file: &'static str, num_features: usize) {
 
         let forgetting_duration = start.elapsed();
 
-        println!("{},{},{}", dataset_file, worker.index(), forgetting_duration.as_micros());
+        if worker.index() == 0 {
+            println!("knn,{},{}", dataset_file, forgetting_duration.as_micros());
+        }
 
     }).unwrap();
 }

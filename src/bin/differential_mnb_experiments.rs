@@ -10,7 +10,9 @@ use differential_dataflow::input::InputSession;
 
 fn main() {
 
-    let num_samples_to_forget = 20;
+    let num_samples_to_forget: usize = std::env::args().nth(2)
+        .expect("num_samples_to_forget not specified").parse()
+        .expect("Unable to parse num_samples_to_forget");
 
     run_experiment("datasets/mushrooms.libsvm", num_samples_to_forget, true);
     run_experiment("datasets/phishing.libsvm", num_samples_to_forget, false);
@@ -67,8 +69,9 @@ fn run_experiment(
 
         let forgetting_duration = start.elapsed();
 
-        println!("{},{},{}", dataset_file, worker.index(), forgetting_duration.as_micros());
-
+        if worker.index() == 0 {
+            println!("mnb,{},{}", dataset_file, forgetting_duration.as_micros());
+        }
     }).unwrap();
 
 }

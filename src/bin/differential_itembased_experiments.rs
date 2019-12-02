@@ -3,24 +3,39 @@ extern crate timely;
 extern crate differential_dataflow;
 
 use differential_dataflow::input::InputSession;
+use std::time::Instant;
+use rand::seq::SliceRandom;
 
 fn main() {
 
+    let num_samples_to_forget: usize = std::env::args().nth(2)
+        .expect("num_samples_to_forget not specified").parse()
+        .expect("Unable to parse num_samples_to_forget");
+
+    run_experiment("datasets/movielens1m.tsv", 6040, num_samples_to_forget);
+    run_experiment("datasets/jester.tsv", 50692, num_samples_to_forget);
+    run_experiment("datasets/ciaodvd.tsv", 21019, num_samples_to_forget);
+}
+
+fn run_experiment(
+    dataset_file: &'static str,
+    num_users: usize,
+    num_users_to_forget: usize
+) {
     timely::execute_from_args(std::env::args(), move |worker| {
 
         let mut interactions_input = InputSession::new();
 
         let probe = amnesia::differential::itembased::itembased_cf(worker, &mut interactions_input);
 
-        let interactions: Vec<(u32, u32)> = vec![
-            (0, 0), (0, 1), (0, 2),
-            (1, 1), (1, 2),
-            (2, 0), (2, 1), (2, 3)
-        ];
+        let mut interactions =
+            amnesia::differential::io_utils::read_interactions(dataset_file, num_users);
 
-        for (user, item) in interactions.iter() {
+        for (user, history) in interactions.iter() {
             if *user as usize % worker.peers() == worker.index() {
-                interactions_input.insert((*user, *item));
+                for item in history.iter() {
+                    interactions_input.insert((*user, *item));
+                }
             }
         }
 
@@ -29,11 +44,17 @@ fn main() {
 
         worker.step_while(|| probe.less_than(interactions_input.time()));
 
-        let interactions_to_remove: Vec<(u32, u32)> = vec![(1, 1), (1, 2)];
+        let mut rng = rand::thread_rng();
+        let (interactions_to_remove, _) =
+            interactions.partial_shuffle(&mut rng, num_users_to_forget);
 
-        for (user, item) in interactions_to_remove.iter() {
+        let start = Instant::now();
+
+        for (user, history) in interactions_to_remove.iter() {
             if *user as usize % worker.peers() == worker.index() {
-                interactions_input.remove((*user, *item));
+                for item in history.iter() {
+                    interactions_input.remove((*user, *item));
+                }
             }
         }
 
@@ -42,6 +63,10 @@ fn main() {
 
         worker.step_while(|| probe.less_than(interactions_input.time()));
 
+        let forgetting_duration = start.elapsed();
 
+        if worker.index() == 0 {
+            println!("itembased,{},{}", dataset_file, forgetting_duration.as_micros());
+        }
     }).unwrap();
 }

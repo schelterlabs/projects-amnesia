@@ -3,7 +3,7 @@ extern crate rand;
 
 use std::time::Instant;
 use rand::Rng;
-use amnesia::multinomial_nb::MultinomialNaiveBayes;
+use amnesia::mnb::MultinomialNaiveBayes;
 use amnesia::IncrementalDecrementalModel;
 
 fn main() {

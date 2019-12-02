@@ -6,7 +6,7 @@ use crate::lsh::Example;
 use ndarray::Array1;
 
 
-use crate::multinomial_nb::MNBFeatures;
+use crate::mnb::MNBFeatures;
 use fnv::FnvHashMap;
 
 pub fn read_libsvm_file(dataset_file: &str, num_features: usize) -> Vec<Example> {
