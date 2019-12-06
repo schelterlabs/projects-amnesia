@@ -126,6 +126,7 @@ pub fn lsh<T>(
         let projection_matrices = initial_projection_matrices
             .map(|matrix| ((), matrix));
 
+        // Couldn't find an operator for cartesian products, so we mimic this with a join
         let indexed_examples = examples
             .map(|example| ((), example))
             .join_map(&projection_matrices, |_, example, matrix| {
@@ -135,6 +136,7 @@ pub fn lsh<T>(
 
                 let mut projection: Vec<f64> = vec![0.0; num_hash_dimensions as usize];
 
+                // Random projection of features
                 unsafe {
                     dgemv(
                         b'T',
@@ -150,6 +152,7 @@ pub fn lsh<T>(
                         1);
                 }
 
+                // Signs of the result of the random projection give us the bucket key
                 let mut key = 0u32;
                 for (dimension, value) in projection.iter().enumerate() {
                     if *value > 0.0 {
@@ -160,8 +163,8 @@ pub fn lsh<T>(
                 ((matrix.table_index, key), example.id)
             });
 
+        // Buckets per table, could be used for search afterwards
         let arranged_indexed_examples = indexed_examples.arrange_by_key();
-            //.inspect(|x| println!("{:?}", x))
 
         arranged_indexed_examples.stream.probe_with(&mut probe);
     });

@@ -42,6 +42,7 @@ fn run_experiment(dataset_file: &'static str, num_features: usize, num_samples_t
 
         let mut tables: Vec<ProjectionMatrix> = Vec::with_capacity(num_tables);
 
+        // Generate random projection matrices
         for table_index in 0..num_tables {
             let mut random_matrix: Vec<f64> =
                 Vec::with_capacity(num_hash_dimensions * num_features);
