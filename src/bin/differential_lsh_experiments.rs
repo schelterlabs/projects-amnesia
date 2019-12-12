@@ -64,6 +64,8 @@ fn run_experiment(dataset_file: &'static str, num_features: usize, num_samples_t
             }
         }
 
+        tables_input.close();
+
         for sample in samples.iter() {
             if sample.id as usize % worker.peers() == worker.index() {
                 examples_input.insert(sample.clone());
@@ -72,12 +74,8 @@ fn run_experiment(dataset_file: &'static str, num_features: usize, num_samples_t
 
         examples_input.advance_to(1);
         examples_input.flush();
-        tables_input.advance_to(1);
-        tables_input.flush();
 
-        worker.step_while(|| {
-            probe.less_than(examples_input.time()) && probe.less_than(tables_input.time())
-        });
+        worker.step_while(|| probe.less_than(examples_input.time()));
 
         let mut rng = rand::thread_rng();
         let (samples_to_forget, _) = samples.partial_shuffle(&mut rng, num_samples_to_forget);
@@ -92,12 +90,8 @@ fn run_experiment(dataset_file: &'static str, num_features: usize, num_samples_t
 
         examples_input.advance_to(2);
         examples_input.flush();
-        tables_input.advance_to(2);
-        tables_input.flush();
 
-        worker.step_while(|| {
-            probe.less_than(examples_input.time()) && probe.less_than(tables_input.time())
-        });
+        worker.step_while(|| probe.less_than(examples_input.time()));
 
         let forgetting_duration = start.elapsed();
 

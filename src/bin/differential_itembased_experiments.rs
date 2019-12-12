@@ -5,6 +5,7 @@ extern crate differential_dataflow;
 use differential_dataflow::input::InputSession;
 use std::time::Instant;
 use rand::seq::SliceRandom;
+#[allow(deprecated)]
 use rand::{SeedableRng,XorShiftRng};
 
 fn main() {
@@ -45,6 +46,7 @@ fn run_experiment(
 
         worker.step_while(|| probe.less_than(interactions_input.time()));
 
+        #[allow(deprecated)]
         let mut rng = XorShiftRng::from_seed([1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
             11, 12, 13, 14, 15, 16]);
 

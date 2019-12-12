@@ -120,15 +120,19 @@ pub fn lsh<T>(
 
     worker.dataflow(|scope| {
 
+        let num_workers = scope.peers();
+
         let initial_projection_matrices = tables_input.to_collection(scope);
         let examples = examples_input.to_collection(scope);
 
+        // Broadcast the matrices for efficient parallelisation of the cartesian product
         let projection_matrices = initial_projection_matrices
-            .map(|matrix| ((), matrix));
+            .flat_map(move |matrix| {
+                (0..num_workers).map(move |key| (key, matrix.clone()))
+            });
 
-        // Couldn't find an operator for cartesian products, so we mimic this with a join
         let indexed_examples = examples
-            .map(|example| ((), example))
+            .map(move |example| (example.id as usize % num_workers, example))
             .join_map(&projection_matrices, |_, example, matrix| {
 
                 let num_features = example.features.len();

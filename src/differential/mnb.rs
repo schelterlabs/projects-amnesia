@@ -10,7 +10,7 @@ use timely::order::TotalOrder;
 use differential_dataflow::input::InputSession;
 use differential_dataflow::lattice::Lattice;
 use differential_dataflow::Hashable;
-use differential_dataflow::operators::Reduce;
+use differential_dataflow::operators::Count;
 
 use std::hash::Hasher;
 use std::cmp::Ordering;
@@ -59,7 +59,6 @@ impl Hashable for CategoricalSample {
     }
 }
 
-// Very simple version of naive bayes in DD
 pub fn mnb<T>(
     worker: &mut Worker<Allocator>,
     examples_input: &mut InputSession<T, CategoricalSample, isize>
@@ -69,28 +68,18 @@ pub fn mnb<T>(
     worker.dataflow(|scope| {
         let examples = examples_input.to_collection(scope);
 
-        let features_per_label = examples
-            .flat_map(|example: CategoricalSample| {
+        let features_per_label =
+            examples.explode(|example: CategoricalSample| {
                 let label = example.label;
                 // We only have binary features in our example datasets
                 example.features.into_iter()
-                    .map(move |feature_index| ((feature_index, label), 1_u32))
+                    .map(move |feature_index| ((feature_index, label), 1 as isize))
             });
 
-        // Counts per feature and label
-        let feature_per_label_counts = features_per_label
-            .reduce(|_feature_index_and_label, records, output| {
-                let sum: u32 = records.iter().map(|record| *record.0).sum();
-                output.push((sum, 1));
-            });
-
-        // Counts per label
-        let label_counts = feature_per_label_counts
-            .map(|((_feature_index, label), count)| (label, count))
-            .reduce(|_label, records, output| {
-                let sum: u32 = records.iter().map(|record| record.0).sum();
-                output.push((sum, 1));
-            });
+        let feature_per_label_counts = features_per_label.count();
+        let label_counts = features_per_label
+            .map(|(_, label)| label)
+            .count();
 
         (label_counts.probe(), feature_per_label_counts.probe())
     })
